@@ -9,17 +9,17 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-<Link
-  href={`/marketplace/${product.slug}`}
-  className="block overflow-hidden rounded-xl border bg-card transition hover:shadow-md"
-> 
-<div className="relative aspect-square bg-muted">   
+    <Link
+      href={`/marketplace/${product.slug}`}
+      className="block overflow-hidden rounded-xl border bg-card transition hover:shadow-md"
+    >
+      <div className="relative aspect-square bg-muted">
         {product.image_url ? (
           <Image
             src={product.image_url}
             alt={product.name}
             fill
-            className="h-full w-full object-cover"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
