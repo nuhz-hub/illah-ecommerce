@@ -22,18 +22,26 @@ export async function getProductBySlug(
 ): Promise<Product | null> {
   const supabase = await createClient();
 
+  const decodedSlug = decodeURIComponent(slug);
+
+  console.log("ORIGINAL SLUG:", JSON.stringify(slug));
+  console.log("DECODED SLUG:", JSON.stringify(decodedSlug));
+
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .eq("slug", slug)
-    .single();
+    .eq("slug", decodedSlug)
+    .maybeSingle();
+
+  console.log("PRODUCT QUERY RESULT:", data);
+  console.log("PRODUCT QUERY ERROR:", error);
 
   if (error) {
     console.error("Error fetching product:", error.message);
     return null;
   }
 
-  return data as Product;
+  return data as Product | null;
 }
 
 export type CreateProductInput = {
