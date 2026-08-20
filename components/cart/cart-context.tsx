@@ -28,33 +28,35 @@ const CartContext = createContext<CartContextType | undefined>(
 
 const CART_STORAGE_KEY = "illah-ecommerce-cart";
 
+function getInitialCart(): CartItem[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+
+    if (!savedCart) {
+      return [];
+    }
+
+    const parsedCart = JSON.parse(savedCart);
+
+    return Array.isArray(parsedCart) ? parsedCart : [];
+  } catch (error) {
+    console.error("Failed to load cart:", error);
+    return [];
+  }
+}
+
 export function CartProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [items, setItems] = useState<CartItem[]>(getInitialCart);
 
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-
-      if (savedCart) {
-        setItems(JSON.parse(savedCart));
-      }
-    } catch (error) {
-      console.error("Failed to load cart:", error);
-    } finally {
-      setIsLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
-
     try {
       localStorage.setItem(
         CART_STORAGE_KEY,
@@ -63,7 +65,7 @@ export function CartProvider({
     } catch (error) {
       console.error("Failed to save cart:", error);
     }
-  }, [items, isLoaded]);
+  }, [items]);
 
   function addToCart(product: Product) {
     setItems((currentItems) => {

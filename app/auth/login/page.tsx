@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,9 +53,8 @@ export default function LoginPage() {
       password,
     });
 
-    setLoading(true);
-
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
@@ -127,4 +126,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

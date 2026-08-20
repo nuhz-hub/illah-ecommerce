@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
+
 import "./globals.css";
+
 import { CartProvider } from "@/components/cart/cart-context";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   title: "Illah Ecommerce",
-  description: "Illah Ecommerce marketplace",
+  description:
+    "A modern ecommerce marketplace connecting buyers and sellers.",
 };
 
 export default function RootLayout({
@@ -14,8 +19,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <CartProvider>{children}</CartProvider>
+      <body className="min-h-screen bg-background antialiased">
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <SiteHeader />
+
+            <main className="flex-1">
+              {children}
+            </main>
+
+            <SiteFooter />
+          </div>
+        </CartProvider>
       </body>
     </html>
   );

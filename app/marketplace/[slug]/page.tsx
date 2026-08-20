@@ -1,6 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { getProductBySlug } from "@/services/products";
 
 type ProductPageProps = {
@@ -23,6 +25,15 @@ export default async function ProductPage({
   return (
     <main className="min-h-screen px-6 py-10">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <Link
+            href="/marketplace"
+            className="text-sm font-medium underline"
+          >
+            ← Back to marketplace
+          </Link>
+        </div>
+
         <div className="grid gap-10 md:grid-cols-2">
           <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
             {product.image_url ? (
@@ -34,23 +45,23 @@ export default async function ProductPage({
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
-                No image available
+                No image
               </div>
             )}
           </div>
 
-          <div className="flex flex-col justify-center">
+          <div>
             {product.category && (
               <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 {product.category}
               </p>
             )}
 
-            <h1 className="mt-2 text-4xl font-bold">
+            <h1 className="mt-2 text-3xl font-bold tracking-tight">
               {product.name}
             </h1>
 
-            <p className="mt-6 text-3xl font-bold">
+            <p className="mt-4 text-2xl font-bold">
               ₦{product.price.toLocaleString()}
             </p>
 
@@ -61,25 +72,14 @@ export default async function ProductPage({
             )}
 
             <div className="mt-6">
-              {product.stock > 0 ? (
-                <p className="text-sm">
-                  <span className="font-medium">In stock:</span>{" "}
-                  {product.stock} available
-                </p>
-              ) : (
-                <p className="font-medium text-red-600">
-                  Out of stock
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">
+                {product.stock > 0
+                  ? `${product.stock} available`
+                  : "Out of stock"}
+              </p>
             </div>
 
-            <button
-              type="button"
-              disabled={product.stock === 0}
-              className="mt-8 w-full rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Add to cart
-            </button>
+            <AddToCartButton product={product} />
           </div>
         </div>
       </div>

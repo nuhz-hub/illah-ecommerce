@@ -1,24 +1,28 @@
-
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
-import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/cart-context";
+import type { Product } from "@/types/product";
 
 type ProductCardProps = {
   product: Product;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({
+  product,
+}: ProductCardProps) {
   const { addToCart } = useCart();
 
   const isOutOfStock = product.stock <= 0;
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card transition hover:shadow-md">
-      <Link href={`/marketplace/${product.slug}`} className="block">
+      <Link
+        href={`/marketplace/${product.slug}`}
+        className="block"
+      >
         <div className="relative aspect-square bg-muted">
           {product.image_url ? (
             <Image
@@ -72,7 +76,9 @@ export function ProductCard({ product }: ProductCardProps) {
           onClick={() => addToCart(product)}
           className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isOutOfStock ? "Out of stock" : "Add to cart"}
+          {isOutOfStock
+            ? "Out of stock"
+            : "Add to cart"}
         </button>
       </div>
     </div>

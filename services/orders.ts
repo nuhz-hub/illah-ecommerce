@@ -149,3 +149,103 @@ export async function createOrder(input: CreateOrderInput) {
     error: null,
   };
 }
+
+export async function getMyOrders() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      data: null,
+      error: "You must be logged in to view your orders.",
+    };
+  }
+
+  // Get all orders for the logged-in user
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(
+        "Error fetching orders:",
+        error.message,
+      );
+
+      return {
+        data: null,
+        error: error.message,
+      };
+    }
+
+    return {
+      data: orders ?? [],
+      error: null,
+    };
+  }
+
+  export async function getMyOrder(orderId: string) {
+  const supabase = await createClient();
+
+const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      data: null,
+      error: "You must be logged in to view your order.",
+    };
+  }
+
+  // Get one specific order belonging to the logged-in user
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (orderError) {
+    console.error(
+      "Error fetching order:",
+      orderError.message,
+    );
+
+    return {
+      data: null,
+      error: orderError.message,
+    };
+  }
+
+  const { data: items, error: itemsError } = await supabase
+    .from("order_items")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+
+  if (itemsError) {
+    console.error(
+      "Error fetching order items:",
+      itemsError.message,
+    );
+
+    return {
+      data: null,
+      error: itemsError.message,
+    };
+  }
+
+  return {
+    data: {
+      order,
+      items: items ?? [],
+    },
+    error: null,
+  };
+}

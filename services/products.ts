@@ -7,14 +7,20 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", {
+      ascending: false,
+    });
 
   if (error) {
-    console.error("Error fetching products:", error.message);
+    console.error(
+      "Error fetching products:",
+      error.message,
+    );
+
     return [];
   }
 
-  return data as Product[];
+  return (data ?? []) as Product[];
 }
 
 export async function getProductBySlug(
@@ -24,20 +30,18 @@ export async function getProductBySlug(
 
   const decodedSlug = decodeURIComponent(slug);
 
-  console.log("ORIGINAL SLUG:", JSON.stringify(slug));
-  console.log("DECODED SLUG:", JSON.stringify(decodedSlug));
-
   const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("slug", decodedSlug)
     .maybeSingle();
 
-  console.log("PRODUCT QUERY RESULT:", data);
-  console.log("PRODUCT QUERY ERROR:", error);
-
   if (error) {
-    console.error("Error fetching product:", error.message);
+    console.error(
+      "Error fetching product:",
+      error.message,
+    );
+
     return null;
   }
 
@@ -54,7 +58,9 @@ export type CreateProductInput = {
   stock: number;
 };
 
-export async function createProduct(input: CreateProductInput) {
+export async function createProduct(
+  input: CreateProductInput,
+) {
   const supabase = await createClient();
 
   const {
@@ -64,7 +70,8 @@ export async function createProduct(input: CreateProductInput) {
   if (!user) {
     return {
       data: null,
-      error: "You must be logged in to create a product.",
+      error:
+        "You must be logged in to create a product.",
     };
   }
 
@@ -78,7 +85,10 @@ export async function createProduct(input: CreateProductInput) {
     .single();
 
   if (error) {
-    console.error("Error creating product:", error.message);
+    console.error(
+      "Error creating product:",
+      error.message,
+    );
 
     return {
       data: null,

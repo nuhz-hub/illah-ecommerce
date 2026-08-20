@@ -71,8 +71,7 @@ export default async function OrdersPage() {
               </h2>
 
               <p className="mt-2 text-sm text-muted-foreground">
-                Your purchases will appear here after you
-                place an order.
+                Your completed purchases will appear here.
               </p>
 
               <Button asChild className="mt-6">
