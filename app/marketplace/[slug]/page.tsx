@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { getProductBySlug } from "@/services/products";
+import { createClient } from "@/lib/supabase/server";
 
 type ProductPageProps = {
   params: Promise<{
@@ -17,6 +18,12 @@ export default async function ProductPage({
   const { slug } = await params;
 
   const product = await getProductBySlug(slug);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isSeller = user?.id === product?.seller_id;
 
   if (!product) {
     notFound();
@@ -26,12 +33,12 @@ export default async function ProductPage({
     <main className="min-h-screen px-6 py-10">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
-          <Link
-            href="/marketplace"
-            className="text-sm font-medium underline"
-          >
-            ← Back to marketplace
-          </Link>
+         <Link
+  href={isSeller ? "/dashboard/products" : "/marketplace"}
+  className="text-sm font-medium underline"
+>
+  {isSeller ? "← Back to My Listings" : "← Back to Marketplace"}
+</Link>
         </div>
 
         <div className="grid gap-10 md:grid-cols-2">

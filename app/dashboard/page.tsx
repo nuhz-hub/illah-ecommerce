@@ -84,24 +84,33 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Seller Tools</CardTitle>
-          </CardHeader>
+       <Card className="mt-8">
+  <CardHeader>
+    <CardTitle>Seller Tools</CardTitle>
+  </CardHeader>
 
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Add products to your Illah Ecommerce marketplace and make them
-              available to customers.
-            </p>
+  <CardContent>
+    <p className="text-sm text-muted-foreground">
+      Manage your marketplace listings, add new products, and keep
+      your seller inventory up to date.
+    </p>
 
-            <Button asChild className="mt-5">
-              <Link href="/dashboard/products/new">
-                Add New Product
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+    <div className="mt-5 flex flex-wrap gap-3">
+      <Button asChild>
+        <Link href="/dashboard/products">
+          My Listings
+        </Link>
+      </Button>
+
+      <Button variant="outline" asChild>
+        <Link href="/dashboard/products/new">
+          Add New Product
+        </Link>
+      </Button>
+    </div>
+  </CardContent>
+</Card>
+
       </div>
     </main>
   );
