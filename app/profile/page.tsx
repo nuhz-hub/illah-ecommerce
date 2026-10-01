@@ -2,13 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -21,66 +14,90 @@ export default async function ProfilePage() {
     redirect("/auth/login");
   }
 
-  return (
-    <main className="min-h-screen bg-muted/30 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            My Profile
-          </h1>
+ const { data: profile, error } = await supabase
+  .from("profiles")
+  .select(
+  "id, full_name, avatar_url, phone, location, bio, created_at, updated_at",
+)
+  .eq("id", user.id)
+  .maybeSingle();
 
-          <p className="mt-2 text-muted-foreground">
-            Manage your Illah Ecommerce account.
+  if (error) {
+    console.error("Profile fetch error:", error);
+  }
+
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mb-8">
+        <p className="text-sm text-muted-foreground">My Account</p>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Profile</h1>
+            <p className="mt-2 text-muted-foreground">
+              View your Illah Marketplace profile.
+            </p>
+          </div>
+
+          <Link
+            href="/profile/edit"
+            className="rounded-md border px-4 py-2 text-sm font-medium"
+          >
+            Edit Profile
+          </Link>
+        </div>
+      </div>
+
+      <div className="space-y-6 rounded-xl border p-6">
+        <div>
+          <p className="text-sm text-muted-foreground">Full name</p>
+          <p className="mt-1 text-lg font-medium">
+            {profile?.full_name || "Not provided"}
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-          </CardHeader>
+        <div>
+          <p className="text-sm text-muted-foreground">Email</p>
+          <p className="mt-1">{user.email || "Not available"}</p>
+        </div>
 
-          <CardContent className="space-y-5">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Email
-              </p>
+        <div>
+          <p className="text-sm text-muted-foreground">Phone</p>
+          <p className="mt-1">{profile?.phone || "Not provided"}</p>
+        </div>
 
-              <p className="mt-1 font-medium">
-                {user.email}
-              </p>
-            </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Location</p>
+          <p className="mt-1">{profile?.location || "Not provided"}</p>
+        </div>
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                User ID
-              </p>
+        <div>
+          <p className="text-sm text-muted-foreground">Bio</p>
+          <p className="mt-1">
+            {profile?.bio || "No bio added yet."}
+          </p>
+        </div>
 
-              <p className="mt-1 break-all text-sm">
-                {user.id}
-              </p>
-            </div>
+        <div>
+          <p className="text-sm text-muted-foreground">User ID</p>
+          <p className="mt-1 break-all text-sm">{user.id}</p>
+        </div>
+      </div>
 
-            <div className="flex flex-wrap gap-3 pt-4">
-              <Button asChild>
-                <Link href="/orders">
-                  My Orders
-                </Link>
-              </Button>
+      <div className="mt-6 flex gap-3">
+        <Link
+          href="/dashboard"
+          className="rounded-md border px-4 py-2 text-sm font-medium"
+        >
+          Dashboard
+        </Link>
 
-              <Button variant="outline" asChild>
-                <Link href="/marketplace">
-                  Marketplace
-                </Link>
-              </Button>
-
-              <Button variant="outline" asChild>
-                <Link href="/dashboard">
-                  Dashboard
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Link
+          href="/orders"
+          className="rounded-md border px-4 py-2 text-sm font-medium"
+        >
+          My Orders
+        </Link>
       </div>
     </main>
   );
