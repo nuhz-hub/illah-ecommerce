@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -9,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { createClient } from "@/lib/supabase/client";
+import { uploadProductImage } from "@/services/product-images";
 const productSchema = z.object({
   name: z.string().min(2, "Product name is required"),
   slug: z.string().min(2, "Product slug is required"),
@@ -27,7 +30,7 @@ export default function NewProductPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [category, setCategory] = useState("");
   const [stock, setStock] = useState("");
 
@@ -38,14 +41,20 @@ export default function NewProductPage() {
     event.preventDefault();
 
     setError("");
-    setLoading(true);
+setLoading(true);
 
-    const validation = productSchema.safeParse({
+if (!imageFile) {
+  setError("Please select a product image.");
+  setLoading(false);
+  return;
+}
+
+const validation = productSchema.safeParse({
       name,
       slug,
       description,
       price: Number(price),
-      image_url: imageUrl,
+      image_url: "",
       category,
       stock: Number(stock),
     });
@@ -55,12 +64,36 @@ export default function NewProductPage() {
       setLoading(false);
       return;
     }
+
+const supabase = createClient();
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  setError("You must be logged in to upload a product image.");
+  setLoading(false);
+  return;
+}
+
+const uploadResult = await uploadProductImage(
+  imageFile,
+  user.id,
+);
+
+if (uploadResult.error || !uploadResult.url) {
+  setError(uploadResult.error ?? "Image upload failed.");
+  setLoading(false);
+  return;
+}
+
 const result = await createProductAction({
   name: validation.data.name,
   slug: validation.data.slug,
   description: validation.data.description,
   price: validation.data.price,
-  image_url: validation.data.image_url,
+  image_url: uploadResult.url,
   category: validation.data.category,
   stock: validation.data.stock,
 });
@@ -159,15 +192,19 @@ if (result.error) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  type="url"
-                  value={imageUrl}
-                  onChange={(event) => setImageUrl(event.target.value)}
-                  placeholder="https://example.com/product.jpg"
-                />
-              </div>
+  <Label htmlFor="image">Product image</Label>
+  <Input
+    id="image"
+    type="file"
+    accept="image/*"
+    onChange={(event) =>
+      setImageFile(event.target.files?.[0] ?? null)
+    }
+  />
+  <p className="text-sm text-muted-foreground">
+    Select a product image. Maximum size: 5MB.
+  </p>
+</div>
 
               {error && (
                 <p className="text-sm text-red-600" role="alert">
