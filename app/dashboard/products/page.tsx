@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
+import ArchiveProductButton from "@/components/dashboard/archive-product-button";
+
+import RestoreProductButton from "@/components/dashboard/restore-product-button";
+
 export default async function MyProductsPage() {
   const supabase = await createClient();
 
@@ -24,7 +28,7 @@ export default async function MyProductsPage() {
   const { data: products, error } = await supabase
     .from("products")
     .select(
-      "id, name, slug, description, price, image_url, category, stock, seller_id, created_at, updated_at",
+      "id, name, slug, description, price, image_url, category, stock, seller_id, is_active, archived_at, created_at, updated_at",
     )
     .eq("seller_id", user.id)
     .order("created_at", {
@@ -91,6 +95,18 @@ export default async function MyProductsPage() {
                       </p>
                     </div>
 
+                    <div className="mt-2">
+  <span
+    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+      product.is_active
+        ? "bg-green-100 text-green-700"
+        : "bg-gray-100 text-gray-600"
+    }`}
+  >
+    {product.is_active ? "Active" : "Archived"}
+  </span>
+</div>
+
                         <div className="flex gap-3">
                           <Button variant="outline" asChild>
                             <Link href={`/marketplace/${product.slug}`}>
@@ -103,6 +119,12 @@ export default async function MyProductsPage() {
                               Edit
                             </Link>
                           </Button>
+
+                          {product.is_active ? (
+                            <ArchiveProductButton productId={product.id} />
+                          ) : (
+                            <RestoreProductButton productId={product.id} />
+                          )}
                         </div>
                       </div>
                     </CardHeader>
