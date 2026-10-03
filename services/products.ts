@@ -1,5 +1,17 @@
+import { z } from "zod";
+
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/types/product";
+
+const createProductSchema = z.object({
+  name: z.string().min(2, "Product name is required"),
+  slug: z.string().min(2, "Product slug is required"),
+  description: z.string().min(5, "Description is required"),
+  price: z.number().positive("Price must be greater than 0"),
+  image_url: z.string(),
+  category: z.string().min(2, "Category is required"),
+  stock: z.number().int().min(0, "Stock cannot be negative"),
+});
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = await createClient();
@@ -60,8 +72,16 @@ export type CreateProductInput = {
 export async function createProduct(
   input: CreateProductInput,
 ) {
-  const supabase = await createClient();
+  const validation = createProductSchema.safeParse(input);
 
+  if (!validation.success) {
+    return {
+      data: null,
+      error: validation.error.issues[0].message,
+    };
+  }
+
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -77,7 +97,7 @@ export async function createProduct(
   const { data, error } = await supabase
     .from("products")
     .insert({
-      ...input,
+      ...validation.data,
       seller_id: user.id,
     })
     .select()
