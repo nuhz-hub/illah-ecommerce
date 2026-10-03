@@ -5,11 +5,10 @@ export async function getProducts(): Promise<Product[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .order("created_at", {
-      ascending: false,
-    });
+  .from("products")
+  .select("*")
+  .eq("is_active", true)
+  .order("created_at", { ascending: false });
 
   if (error) {
     console.error(
@@ -30,12 +29,12 @@ export async function getProductBySlug(
 
   const decodedSlug = decodeURIComponent(slug);
 
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", decodedSlug)
-    .maybeSingle();
-
+ const { data, error } = await supabase
+  .from("products")
+  .select("*")
+  .eq("slug", decodedSlug)
+  .eq("is_active", true)
+  .maybeSingle();
   if (error) {
     console.error(
       "Error fetching product:",
