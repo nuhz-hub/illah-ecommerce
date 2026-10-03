@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/client";
+import { createProductAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,8 +22,7 @@ const productSchema = z.object({
 
 export default function NewProductPage() {
   const router = useRouter();
-  const supabase = createClient();
-
+  
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -41,16 +40,6 @@ export default function NewProductPage() {
     setError("");
     setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setError("You must be logged in to create a product.");
-      setLoading(false);
-      return;
-    }
-
     const validation = productSchema.safeParse({
       name,
       slug,
@@ -66,27 +55,24 @@ export default function NewProductPage() {
       setLoading(false);
       return;
     }
+const result = await createProductAction({
+  name: validation.data.name,
+  slug: validation.data.slug,
+  description: validation.data.description,
+  price: validation.data.price,
+  image_url: validation.data.image_url,
+  category: validation.data.category,
+  stock: validation.data.stock,
+});
 
-    const { error: insertError } = await supabase.from("products").insert({
-      name: validation.data.name,
-      slug: validation.data.slug,
-      description: validation.data.description,
-      price: validation.data.price,
-      image_url: validation.data.image_url || null,
-      category: validation.data.category,
-      stock: validation.data.stock,
-      seller_id: user.id,
-    });
+setLoading(false);
 
-    setLoading(false);
+if (result.error) {
+  setError(result.error);
+  return;
+}
 
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-
-    router.push("/marketplace");
-    router.refresh();
+    router.replace("/marketplace");
   }
 
   return (
