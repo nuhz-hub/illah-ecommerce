@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/client";
+import { uploadProductImage } from "@/services/product-images";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,7 +51,7 @@ export function EditProductForm({
     product.description ?? "",
   );
   const [price, setPrice] = useState(String(product.price));
-  const [imageUrl, setImageUrl] = useState(product.image_url ?? "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [category, setCategory] = useState(product.category ?? "");
   const [stock, setStock] = useState(String(product.stock));
 
@@ -65,56 +66,67 @@ export function EditProductForm({
     setError("");
     setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setError("You must be logged in to edit a product.");
+      if (!user) {
+        setError("You must be logged in to edit a product.");
+        return;
+      }
+
+      const validation = productSchema.safeParse({
+        name,
+        slug,
+        description,
+        price: Number(price),
+        image_url: product.image_url ?? "",
+        category,
+        stock: Number(stock),
+      });
+
+      if (!validation.success) {
+        setError(validation.error.issues[0].message);
+        return;
+      }
+
+      let imageUrl = product.image_url ?? "";
+      if (imageFile) {
+        const uploadResult = await uploadProductImage(imageFile, user.id);
+        if (uploadResult.error || !uploadResult.url) {
+          setError(uploadResult.error ?? "Image upload failed.");
+          return;
+        }
+        imageUrl = uploadResult.url;
+      }
+
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({
+          name: validation.data.name,
+          slug: validation.data.slug,
+          description: validation.data.description,
+          price: validation.data.price,
+          image_url: imageUrl || null,
+          category: validation.data.category,
+          stock: validation.data.stock,
+        })
+        .eq("id", product.id)
+        .eq("seller_id", user.id);
+
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
+
+      router.push("/dashboard/products");
+      router.refresh();
+    } catch {
+      setError("Unable to save product changes.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const validation = productSchema.safeParse({
-      name,
-      slug,
-      description,
-      price: Number(price),
-      image_url: imageUrl,
-      category,
-      stock: Number(stock),
-    });
-
-    if (!validation.success) {
-      setError(validation.error.issues[0].message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("products")
-      .update({
-        name: validation.data.name,
-        slug: validation.data.slug,
-        description: validation.data.description,
-        price: validation.data.price,
-        image_url: validation.data.image_url || null,
-        category: validation.data.category,
-        stock: validation.data.stock,
-      })
-      .eq("id", product.id)
-      .eq("seller_id", user.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(false);
-
-    router.push("/dashboard/products");
-    router.refresh();
   }
 
   return (
@@ -195,18 +207,28 @@ export function EditProductForm({
               required
             />
           </div>
+<div className="space-y-2">
+  <Label htmlFor="image">Replace product image</Label>
 
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
-              placeholder="https://example.com/product.jpg"
-            />
-          </div>
+  <Input
+    id="image"
+    type="file"
+    accept="image/*"
+    onChange={(event) =>
+      setImageFile(event.target.files?.[0] ?? null)
+    }
+  />
 
+  {product.image_url && (
+    <p className="text-sm text-muted-foreground">
+      Current product image is already uploaded.
+    </p>
+  )}
+
+  <p className="text-sm text-muted-foreground">
+    Leave empty to keep the current image. Maximum size: 5MB.
+  </p>
+</div>
           {error && (
             <p className="text-sm text-red-600" role="alert">
               {error}
