@@ -35,81 +35,21 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  const productIds = input.items.map((item) => item.id);
+  const items = input.items.map((item) => ({
+    product_id: item.id,
+    quantity: item.quantity,
+  }));
 
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select("id, name, price, stock")
-    .in("id", productIds);
-
-  if (productsError) {
-    console.error(
-      "Error fetching products for order:",
-      productsError.message,
-    );
-
-    return {
-      data: null,
-      error: productsError.message,
-    };
-  }
-
-  if (!products || products.length !== input.items.length) {
-    return {
-      data: null,
-      error: "One or more products in your cart are no longer available.",
-    };
-  }
-
-  const orderItems = [];
-
-  for (const item of input.items) {
-    const product = products.find(
-      (product) => product.id === item.id,
-    );
-
-    if (!product) {
-      return {
-        data: null,
-        error: `Product "${item.name}" could not be found.`,
-      };
-    }
-
-    if (product.stock < item.quantity) {
-      return {
-        data: null,
-        error: `Not enough stock available for "${product.name}".`,
-      };
-    }
-
-    orderItems.push({
-      product_id: product.id,
-      product_name: product.name,
-      unit_price: product.price,
-      quantity: item.quantity,
-      subtotal: product.price * item.quantity,
-    });
-  }
-
-  const subtotal = orderItems.reduce(
-    (total, item) => total + item.subtotal,
-    0,
+  const { data: orderId, error: orderError } = await supabase.rpc(
+    "create_order_atomic",
+    {
+      p_customer_name: input.customerName,
+      p_customer_email: input.customerEmail,
+      p_customer_phone: input.customerPhone || null,
+      p_shipping_address: input.shippingAddress || null,
+      p_items: items,
+    },
   );
-
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      user_id: user.id,
-      status: "pending",
-      subtotal,
-      total: subtotal,
-      customer_name: input.customerName,
-      customer_email: input.customerEmail,
-      customer_phone: input.customerPhone || null,
-      shipping_address: input.shippingAddress || null,
-    })
-    .select()
-    .single();
 
   if (orderError) {
     console.error(
@@ -123,24 +63,29 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  const { error: itemsError } = await supabase
-    .from("order_items")
-    .insert(
-      orderItems.map((item) => ({
-        ...item,
-        order_id: order.id,
-      })),
-    );
+  if (!orderId) {
+    return {
+      data: null,
+      error: "Order was created but no order ID was returned.",
+    };
+  }
 
-  if (itemsError) {
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (fetchError) {
     console.error(
-      "Error creating order items:",
-      itemsError.message,
+      "Error fetching created order:",
+      fetchError.message,
     );
 
     return {
       data: null,
-      error: itemsError.message,
+      error: fetchError.message,
     };
   }
 
