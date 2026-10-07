@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Product } from "@/types/product";
+import type {
+  Product,
+  ProductWithSeller,
+} from "@/types/product";
 
 const createProductSchema = z.object({
   name: z.string().min(2, "Product name is required"),
@@ -36,7 +39,7 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function getProductBySlug(
   slug: string,
-): Promise<Product | null> {
+): Promise<ProductWithSeller | null> {
   const supabase = await createClient();
 
   const decodedSlug = decodeURIComponent(slug);
@@ -47,6 +50,7 @@ export async function getProductBySlug(
   .eq("slug", decodedSlug)
   .eq("is_active", true)
   .maybeSingle();
+
   if (error) {
     console.error(
       "Error fetching product:",
@@ -56,7 +60,30 @@ export async function getProductBySlug(
     return null;
   }
 
-  return data as Product | null;
+  if (!data) {
+    return null;
+  }
+
+  const { data: seller, error: sellerError } = await supabase.rpc("get_public_seller", {
+      p_seller_id: data.seller_id,
+    });
+
+  if (sellerError) {
+    console.error(
+      "Error fetching seller:",
+      sellerError.message,
+    );
+
+    return {
+      ...(data as Product),
+      seller: null,
+    };
+  }
+
+  return {
+    ...(data as Product),
+    seller: seller?.[0] ?? null,
+  };
 }
 
 export type CreateProductInput = {

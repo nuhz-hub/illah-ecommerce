@@ -78,6 +78,32 @@ export default async function ProductPage({
               </p>
             )}
 
+            {product.seller && (
+  <div className="mt-6 rounded-lg border p-4">
+    <p className="text-sm font-medium text-muted-foreground">
+      Seller
+    </p>
+
+    <div className="mt-2">
+      <p className="font-semibold">
+        {product.seller.full_name || "Unknown seller"}
+      </p>
+
+      {product.seller.location && (
+        <p className="text-sm text-muted-foreground">
+          {product.seller.location}
+        </p>
+      )}
+
+      {product.seller.bio && (
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {product.seller.bio}
+        </p>
+      )}
+    </div>
+  </div>
+)}
+
             <div className="mt-6">
               <p className="text-sm text-muted-foreground">
                 {product.stock > 0
