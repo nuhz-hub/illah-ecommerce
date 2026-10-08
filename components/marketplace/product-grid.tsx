@@ -3,9 +3,13 @@ import { ProductCard } from "./product-card";
 
 type ProductGridProps = {
   products: Product[];
+  favoriteProductIds: string[];
 };
 
-export function ProductGrid({ products }: ProductGridProps) {
+export function ProductGrid({
+  products,
+  favoriteProductIds,
+}: ProductGridProps) {
   if (products.length === 0) {
     return (
       <div className="rounded-xl border p-10 text-center">
@@ -21,7 +25,11 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          initialFavorite={favoriteProductIds.includes(product.id)}
+        />
       ))}
     </div>
   );
